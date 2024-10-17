@@ -1,0 +1,13 @@
+diff --git a/transceiver/transceiver.cpp b/transceiver/transceiver.cpp
+index 28b724c..4519ba1 100644
+--- a/transceiver/transceiver.cpp
++++ b/transceiver/transceiver.cpp
+@@ -2131,6 +2131,8 @@ int Transceiver::handleCmdTune(bool rx, unsigned int arfcn, String& cmd, String*
+ 		m_radio->getRxFreq(f);
+ 	    else
+ 		m_radio->getTxFreq(f);
++
++		printf("f = %lu, requested freq= %lu, threshold = %lu\n", f, freq, (int)m_freqNotExact);
+ 	    int64_t delta = f ? (f - freq) : 0;
+ 	    if (delta && delta >= -(int)m_freqNotExact && delta <= (int)m_freqNotExact)
+ 		rCode &= ~RadioInterface::NotExact;

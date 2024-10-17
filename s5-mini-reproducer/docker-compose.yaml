@@ -1,0 +1,28 @@
+---
+version: '2.1'
+services:
+  yate:
+    # Local build
+    build: .
+    container_name: yate
+    hostname: yate
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    networks:
+      hfnet:
+        ipv4_address: 192.168.0.2
+    volumes:
+      - ./configs/yate:/usr/local/etc/yate
+      - ./data:/data
+    restart: unless-stopped
+
+
+
+networks:
+  hfnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.1
