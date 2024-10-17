@@ -76,4 +76,4 @@ RUN mkdir -p /var/log/yate && \
    rm -rf /usr/local/etc/yate
 
 
-ENTRYPOINT [ "yate -vvv" ]
+ENTRYPOINT [ "yate", "-v" ]
