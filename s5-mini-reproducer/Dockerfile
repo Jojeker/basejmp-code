@@ -25,7 +25,8 @@ RUN apt-get update && \
     dnsutils \
     iputils-ping \
     libtool \
-    nano \
+    vim \
+    wget \
     bc \
     ccache \
     protobuf-compiler \
@@ -56,15 +57,14 @@ RUN git clone https://github.com/Nuand/bladeRF.git /bladeRF && \
 RUN mkdir -p /usr/local/share/yate/nipc_web && \
    git clone https://github.com/yatevoip/ansql.git /usr/local/share/yate/nipc_web/ansql
 
-RUN git clone https://github.com/yatevoip/yate.git /yate && \
-   cd /yate && \
+RUN wget https://nuand.com/downloads/yate-rc-2.tar.gz && \
+  tar xfz yate-rc-2.tar.gz && \
+   cd yate && \
    ./autogen.sh && \
    ./configure && \
    make && \
-   make install-noapi
-  
-RUN git clone https://github.com/yatevoip/yatebts /yatebts && \
-   cd /yatebts && \
+   make install-noapi && \
+   cd ../yatebts && \
    ./autogen.sh && \
    ./configure && \
    make && \
@@ -75,5 +75,9 @@ RUN mkdir -p /var/log/yate && \
    ldconfig && \
    rm -rf /usr/local/etc/yate
 
+# Make sure that the underflows do not happen
+COPY ./configs/security/limits.conf /etc/security/limits.conf
 
-ENTRYPOINT [ "yate", "-v" ]
+RUN apt install telnet iptables -y
+
+ENTRYPOINT [ "yate", "-v"]

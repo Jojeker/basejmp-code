@@ -5,8 +5,16 @@ services:
     build: .
     container_name: yate
     hostname: yate
+    dns:
+      - 1.1.1.1
+      - 9.9.9.9
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
     devices:
       - /dev/bus/usb:/dev/bus/usb
+      - /dev/net/tun:/dev/net/tun
     networks:
       hfnet:
         ipv4_address: 192.168.0.2
