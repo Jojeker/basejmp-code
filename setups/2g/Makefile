@@ -15,10 +15,10 @@ mgw:
 stp:
 	docker build -t osmo-stp:${OSMOBTS_VERSION} ./images/stp
 
-msc:
+msc: stp
 	docker build -t osmo-msc:${OSMOBTS_VERSION} ./images/msc
 
-bsc:
+bsc: msc
 	docker build -t osmo-bsc:${OSMOBTS_VERSION} ./images/bsc
 
 trx:
