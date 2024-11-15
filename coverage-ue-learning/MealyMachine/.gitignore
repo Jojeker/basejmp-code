@@ -1,0 +1,7 @@
+*.o
+mealy_machine
+*.gz
+*.gcda
+*.gcno
+.cache
+compile_commands.json
