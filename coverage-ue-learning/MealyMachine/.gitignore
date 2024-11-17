@@ -5,3 +5,4 @@ mealy_machine
 *.gcno
 .cache
 compile_commands.json
+*.bc

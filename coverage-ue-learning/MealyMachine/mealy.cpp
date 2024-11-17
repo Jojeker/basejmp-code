@@ -1,7 +1,7 @@
 #include <csignal>
 #include <iostream>
-#include <atomic>
 #include <mutex>
+#include <ostream>
 #include <pthread.h>
 #include <condition_variable>
 
@@ -74,12 +74,12 @@ private:
       case 'a':
         GLOBAL_STATE.has_reached_A = true;
         currentState = A;
-        cout << "1" << endl;
+        cout << "1" << endl << flush;
         break;
       case 'b':
         GLOBAL_STATE.has_reached_B = true;
         currentState = B;
-        cout << "2" << endl;
+        cout << "2" << endl << flush;
         break;
       default:
         reset();
@@ -91,11 +91,11 @@ private:
     switch (input) {
       case 'c':
         currentState = C;
-        cout << "3" << endl;
+        cout << "3" << endl << flush;;
         break;
       case 'd':
         currentState = D;
-        cout << "4" << endl;
+        cout << "4" << endl << flush;;
         break;
       default:
         reset();
@@ -107,7 +107,7 @@ private:
     switch (input) {
       case 'e':
         currentState = E;
-        cout << "5" << endl;
+        cout << "5" << endl << flush;;
         break;
       default:
         reset();
@@ -120,7 +120,7 @@ private:
       case 'f':
         GLOBAL_STATE.has_reached_A = true;
         currentState = A;
-        cout << "6" << endl;
+        cout << "6" << endl << flush;;
         break;
       default:
         reset();
@@ -133,7 +133,7 @@ private:
       case 'g':
         GLOBAL_STATE.has_reached_B = true;
         currentState = B;
-        cout << "7" << endl;
+        cout << "7" << endl << flush;;
         break;
       default:
         reset();
@@ -145,7 +145,7 @@ private:
     switch (input) {
       case 'h':
         currentState = C;
-        cout << "8" << endl;
+        cout << "8" << endl << flush;;
         break;
       default:
         reset();
@@ -154,7 +154,7 @@ private:
   }
 
   void reset() {
-    cout << "X" << endl;
+    cout << "X" << endl << flush;;
     resetHard();
   }
 };
@@ -172,12 +172,12 @@ void* signalHandlerThread(void* arg) {
             std::lock_guard<std::mutex> lock(stateMutex);
             resetPending = true;
 
-            DUMP_GLOB();
+            // DUMP_GLOB();
             machine.resetHard();
 
             resetPending = false;
             resetCondition.notify_all();  // Wake up main thread for processing
-            cout << "OK" << endl << std::flush;
+            cout << "OK" << endl << flush;
         }
     }
     return nullptr;
@@ -198,6 +198,7 @@ int main() {
     char input;
     while (cin >> input) {
         machine.processInput(input);
+        DUMP_GLOB();
     }
 
     pthread_join(sigThread, nullptr);
