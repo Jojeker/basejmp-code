@@ -12,12 +12,12 @@
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/Support/Casting.h>
+#include <llvm/Support/ErrorHandling.h>
 
 using namespace llvm;
 
 namespace
 {
-
 
 struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
 {
@@ -34,13 +34,16 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
     LLVMContext &Context = M.getContext ();
 
     // Map each global variable to its corresponding counter for <read, write>
-    DenseMap<GlobalVariable *, std::pair<GlobalVariable *, GlobalVariable*>> globalCounters;
+    DenseMap<GlobalVariable *,
+             std::tuple<GlobalVariable *, GlobalVariable *, GlobalVariable *> >
+        globalCounters;
 
     // Create a new pair of constants for all globals
     for (GlobalVariable &GV : M.globals ())
       {
         if (GV.isConstant () || GV.getName () == "llvm.global_ctors"
             || GV.getName ().contains ("_RD_CNT")
+            || GV.getName ().contains ("_CALL_CNT")
             || GV.getName ().contains ("_WR_CNT"))
           continue;
 
@@ -53,10 +56,16 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
             M, Type::getInt32Ty (Context), false, GlobalValue::ExternalLinkage,
             ConstantInt::get (Type::getInt32Ty (Context), 0),
             GV.getName () + "_WR_CNT");
+        auto *call_counter = new GlobalVariable (
+            M, Type::getInt32Ty (Context), false, GlobalValue::ExternalLinkage,
+            ConstantInt::get (Type::getInt32Ty (Context), 0),
+            GV.getName () + "_CALL_CNT");
 
         errs () << "Counter " << GV.getName () << " instrumented\n";
+
         // Store the mapping
-        globalCounters[&GV] = std::pair(rd_counter,wr_counter);
+        globalCounters[&GV]
+            = std::tuple (rd_counter, wr_counter, call_counter);
       }
 
     errs () << "Created GLOBAL CNTRS\n";
@@ -98,6 +107,31 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
                         incrementCounter (gv, globalCounters, storeInst);
                       }
                   }
+                if (CallInst *cInst = dyn_cast<CallInst> (&I))
+                  {
+                    Function *CalledFunc = cInst->getCalledFunction ();
+                    if (CalledFunc)
+                      {
+                        for (size_t i = 0; i < cInst->getNumOperands (); i++)
+                          {
+                            Value *op = cInst->getOperand (i);
+                            if (GlobalVariable *gv
+                                = dyn_cast<GlobalVariable> (op))
+                              {
+                                if (globalCounters.find (gv)
+                                    != globalCounters.end ())
+                                  {
+                                    errs () << "(" << I.getOpcodeName ()
+                                            << ") in:  "
+                                            << demangle (F.getName ().str ())
+                                            << "\n";
+                                    incrementCounter (gv, globalCounters,
+                                                      cInst);
+                                  }
+                              }
+                          }
+                      }
+                  }
               }
           }
       }
@@ -109,22 +143,39 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
   }
 
   void
-  incrementCounter (
-      GlobalVariable                               *globalVar,
-      DenseMap<GlobalVariable *, std::pair<GlobalVariable *, GlobalVariable*>> &globalCounters,
-      Instruction                                  *insertPoint)
+  incrementCounter (GlobalVariable                          *globalVar,
+                    DenseMap<GlobalVariable *,
+                             std::tuple<GlobalVariable *, GlobalVariable *,
+                                        GlobalVariable *> > &globalCounters,
+                    Instruction                             *insertPoint)
   {
     IRBuilder<>     builder (insertPoint);
     GlobalVariable *counter;
 
-    // Load the current value of the counter and increment it
-    if(dyn_cast<LoadInst>(insertPoint)){
-      counter = globalCounters[globalVar].first;
-    } else {
-      counter = globalCounters[globalVar].second;
-    }
+    errs () << "working with " << *globalVar;
+    auto [rcnt, wcnt, ccnt] = globalCounters[globalVar];
 
-    Value *intCounter       = builder.CreateBitCast (
+    // Load the current value of the counter and increment it
+    if (dyn_cast<LoadInst> (insertPoint))
+      {
+        errs () << "LD INSTRUCTION\n";
+        counter = rcnt;
+      }
+    else if (dyn_cast<StoreInst> (insertPoint))
+      {
+        errs () << "ST INSTRUCTION\n";
+        counter = wcnt;
+      }
+    else if (dyn_cast<CallInst> (insertPoint))
+      {
+        errs () << "CALL INSTRUCTION\n";
+        counter = ccnt;
+      }
+
+    if (!counter)
+      errs () << "No type??? " << *insertPoint;
+
+    Value *intCounter = builder.CreateBitCast (
         counter, Type::getInt32Ty (builder.getContext ())->getPointerTo ());
     Value *counterVal = builder.CreateLoad (
         Type::getInt32Ty (builder.getContext ()), intCounter);
@@ -136,24 +187,28 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
 
   // Function to create the DUMP function in the module
   void
-  createDumpFunction (
-      Module                                       &M,
-      DenseMap<GlobalVariable *, std::pair<GlobalVariable *, GlobalVariable*>> &globalCounters)
+  createDumpFunction (Module                                  &M,
+                      DenseMap<GlobalVariable *,
+                               std::tuple<GlobalVariable *, GlobalVariable *,
+                                          GlobalVariable *> > &globalCounters)
   {
     LLVMContext &Context = M.getContext ();
     IRBuilder<>  builder (Context);
 
-    // Define `void DUMP_GLOB()` 
-    Function *dumpFunc = M.getFunction("DUMP_GLOB");
+    // Define `void DUMP_GLOB()`
+    Function *dumpFunc = M.getFunction ("DUMP_GLOB");
 
     // Get the defintion and replace it (no conflict resolution)
-    if (!dumpFunc) {
-        FunctionType *funcType = FunctionType::get(Type::getVoidTy(Context), false);
-        dumpFunc = Function::Create(funcType, Function::ExternalLinkage, "DUMP_GLOB", M);
-    }
+    if (!dumpFunc)
+      {
+        FunctionType *funcType
+            = FunctionType::get (Type::getVoidTy (Context), false);
+        dumpFunc = Function::Create (funcType, Function::ExternalLinkage,
+                                     "DUMP_GLOB", M);
+      }
 
     // Create the entry block
-    BasicBlock *entry  = BasicBlock::Create (Context, "entry", dumpFunc);
+    BasicBlock *entry = BasicBlock::Create (Context, "entry", dumpFunc);
     builder.SetInsertPoint (entry);
 
     // Declare printf function
@@ -164,25 +219,33 @@ struct GlobalVarCounters : public PassInfoMixin<GlobalVarCounters>
                            true));
 
     // Format string for printing each variable and counter
-    Value *format_str = builder.CreateGlobalStringPtr ("%s=[%d:%d]\n");
+    Value *format_str = builder.CreateGlobalStringPtr ("%s=[%d:%d:%d]\n");
 
     for (auto &entry : globalCounters)
       {
-        GlobalVariable *globalVar = entry.first;
-        GlobalVariable *rd_counter   = entry.second.first;
-        GlobalVariable *wr_counter   = entry.second.second;
+        GlobalVariable *globalVar                   = entry.first;
+        auto [rd_counter, wr_counter, call_counter] = entry.second;
 
         // Load the counter values and print them
-        Value *rd_counterVal = builder.CreateLoad (rd_counter->getType (), rd_counter);
-        Value *wr_counterVal = builder.CreateLoad (wr_counter->getType (), wr_counter);
+        Value *rd_counterVal
+            = builder.CreateLoad (rd_counter->getType (), rd_counter);
+        Value *wr_counterVal
+            = builder.CreateLoad (wr_counter->getType (), wr_counter);
+        Value *call_counterVal
+            = builder.CreateLoad (call_counter->getType (), call_counter);
 
-        builder.CreateCall (printfFunc, { format_str, builder.CreateGlobalStringPtr (demangle(globalVar->getName ().str())),
-                                          rd_counterVal, wr_counterVal });
+        builder.CreateCall (printfFunc,
+                            { format_str,
+                              builder.CreateGlobalStringPtr (
+                                  demangle (globalVar->getName ().str ())),
+                              rd_counterVal, wr_counterVal, call_counterVal });
 
         // Reset the counter (store ptr) for next time
-        Value * zero = ConstantInt::get(Type::getInt32Ty(builder.getContext()), 0);
-        builder.CreateStore(zero, rd_counter);
-        builder.CreateStore(zero, wr_counter);
+        Value *zero
+            = ConstantInt::get (Type::getInt32Ty (builder.getContext ()), 0);
+        builder.CreateStore (zero, rd_counter);
+        builder.CreateStore (zero, wr_counter);
+        builder.CreateStore (zero, call_counter);
       }
 
     // Return from DUMP
