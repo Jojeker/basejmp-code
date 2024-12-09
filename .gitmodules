@@ -1,0 +1,9 @@
+[submodule "modules/2_learning_prototypes/MealyLearner"]
+	path = modules/2_learning_prototypes/MealyLearner
+	url = git@github.com:Jojeker/MealyLearner.git
+[submodule "modules/2_learning_prototypes/MealyMachine"]
+	path = modules/2_learning_prototypes/MealyMachine
+	url = git@github.com:Jojeker/MealyMachine.git
+[submodule "modules/2_learning_prototypes/LLVMGlobalInstrumentation"]
+	path = modules/2_learning_prototypes/LLVMGlobalInstrumentation
+	url = git@github.com:Jojeker/LLVMGlobalInstrumentation.git
