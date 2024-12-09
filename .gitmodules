@@ -7,3 +7,6 @@
 [submodule "modules/2_learning_prototypes/LLVMGlobalInstrumentation"]
 	path = modules/2_learning_prototypes/LLVMGlobalInstrumentation
 	url = git@github.com:Jojeker/LLVMGlobalInstrumentation.git
+[submodule "modules/6_reproducers/5GBaseChecker"]
+	path = modules/6_reproducers/5GBaseChecker
+	url = git@github.com:Jojeker/5GBaseChecker.git
