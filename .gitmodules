@@ -26,3 +26,6 @@
 	path = modules/4_active_fuzzing/open5gs
 	url = git@github.com:Jojeker/open5gs.git
 	branch = fuzz-instrumentation
+[submodule "modules/1_simulated_setups/UERANSIM"]
+	path = modules/1_simulated_setups/UERANSIM
+	url = git@github.com:Jojeker/UERANSIM.git

@@ -16,7 +16,7 @@ This section contains setups for simulating different gNB, UE, and core network 
 The motivation lies in the fact that Software UEs are implemented (somewhat) similar to real-world implementations.
 In addition, they provide a good insight into fuzzing real-world UEs and protocol fuzzing.
 
-1. [`UERANSIM`](https://github.com/Jojeker/a) Contains a setup for the simulated UERANSIM implementation. 
+1. [`UERANSIM`](https://github.com/Jojeker/UERANSIM) Contains a setup for the simulated UERANSIM implementation. 
 It was initially explored due to the simplicity of abstracting the physical layer.
 
 2. [`OAI`](https://github.com/Jojeker/a) This is a C-implementation, that is more similar to an actual UE.
