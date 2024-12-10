@@ -19,3 +19,10 @@
 [submodule "modules/3_naive_fuzzing/pycrate-nr-fuzz"]
 	path = modules/3_naive_fuzzing/pycrate-nr-fuzz
 	url = git@github.com:Jojeker/pycrate-nr-fuzz.git
+[submodule "modules/5_rehosting/FirmWire"]
+	path = modules/5_rehosting/FirmWire
+	url = https://github.com/Jojeker/FirmWire
+[submodule "modules/4_active_fuzzing/open5gs"]
+	path = modules/4_active_fuzzing/open5gs
+	url = git@github.com:Jojeker/open5gs.git
+	branch = fuzz-instrumentation
