@@ -29,3 +29,6 @@
 [submodule "modules/1_simulated_setups/UERANSIM"]
 	path = modules/1_simulated_setups/UERANSIM
 	url = git@github.com:Jojeker/UERANSIM.git
+[submodule "modules/1_simulated_setups/srsRAN_4G"]
+	path = modules/1_simulated_setups/srsRAN_4G
+	url = git@github.com:Jojeker/srsRAN_4G.git

@@ -21,7 +21,8 @@ It was initially explored due to the simplicity of abstracting the physical laye
 
 2. [`OAI`](https://github.com/Jojeker/a) This is a C-implementation, that is more similar to an actual UE.
 
-3. [`srsUE`](https://github.com/Jojeker/a) This is a very complete implementation, that is written in C++.
+3. [`srsUE`](https://github.com/Jojeker/srsRAN_4G) This is a very complete implementation, that is written in C++. 
+Confusingly, it has 4G in its name, but it is also capable of 5G.
 
 
 ### 2. Learning Prototypes
