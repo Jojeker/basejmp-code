@@ -16,3 +16,6 @@
 [submodule "modules/6_reproducers/Shannon-S5-Mini-Reproducer"]
 	path = modules/6_reproducers/Shannon-S5-Mini-Reproducer
 	url = https://github.com/Jojeker/Shannon-S5-Mini-Reproducer
+[submodule "modules/3_naive_fuzzing/pycrate-nr-fuzz"]
+	path = modules/3_naive_fuzzing/pycrate-nr-fuzz
+	url = git@github.com:Jojeker/pycrate-nr-fuzz.git
