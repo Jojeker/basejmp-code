@@ -10,3 +10,6 @@
 [submodule "modules/6_reproducers/5GBaseChecker"]
 	path = modules/6_reproducers/5GBaseChecker
 	url = git@github.com:Jojeker/5GBaseChecker.git
+[submodule "modules/3_naive_fuzzing/ASN1-Fuzzing-Scripts"]
+	path = modules/3_naive_fuzzing/ASN1-Fuzzing-Scripts
+	url = git@github.com:Jojeker/ASN1-Fuzzing-Scripts.git
